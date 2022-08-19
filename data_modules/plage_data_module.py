@@ -1,7 +1,8 @@
 import os
 import torch
 import pytorch_lightning as pl
-from plage_dataset import PlageDataset
+from datasets.dataset_dict import DatasetDict
+from data_modules.plage_dataset import PlageDataset
 from torch.utils.data import Dataset, DataLoader
 from transformers import T5TokenizerFast
 
