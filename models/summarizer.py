@@ -3,6 +3,7 @@ import torch
 import pytorch_lightning as pl
 from torch import nn
 from transformers import AdamW
+from transformers import T5ForConditionalGeneration
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 
