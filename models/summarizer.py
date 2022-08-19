@@ -7,10 +7,9 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 
 class SummarizerModel(pl.LightningModule):
-    def __init__(self, 
-                 summarizer_model = None):
+    def __init__(self, model_name = None):
         super().__init__()
-        self.model = summarizer_model
+        self.model = T5ForConditionalGeneration.from_pretrained(model_name, return_dict = True)
         
     def forward(self, 
                 input_ids, 
