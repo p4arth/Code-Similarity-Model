@@ -10,14 +10,17 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from datasets.dataset_dict import DatasetDict
 from transformers import AdamW, T5ForConditionalGeneration, T5TokenizerFast
 from tqdm.auto import tqdm
+from summarizer import SummarizerModel
+from transformers import AutoTokenizer
+from sentence_transformers import SentenceTransformer
 import warnings
 warnings.simplefilter('ignore')
 
-from models.summarizer import SummarizerModel
-from transformers import AutoTokenizer
 MODEL_NAME = 'Salesforce/codet5-base-multi-sum'
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = SummarizerModel(MODEL_NAME)
+model.load_state_dict(torch.load('codet5-base-1_epoch-val_loss-0.80.pth'))
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def summarize(text: str, 
               tokenizer = tokenizer,
@@ -53,9 +56,20 @@ def summarize(text: str,
                                 for gen_id in generated_ids]
     return "".join(preds)
 
+def find_similarity_score(code_1, code_2, model = embedding_model):
+    summary_code_1 = summarize(text = code_1)
+    summary_code_2 = summarize(text = code_2)
+    embedding_1 = model.encode(summary_code_1)
+    embedding_2 = model.encode(summary_code_2)
+    score = np.dot(embedding_1, embedding_2)/(np.linalg.norm(embedding_1) * np.linalg.norm(embedding_2))
+    return summary_code_1, summary_code_2, round(score, 2)
+
 outputs = gr.outputs.Textbox()
-iface = gr.Interface(fn=summarize, 
-                   inputs=['text'], 
-                   outputs=outputs,
-                   description="This is the summarization")
+iface = gr.Interface(fn=find_similarity_score, 
+                     inputs=[gr.Textbox(label = 'First Code snippet'), 
+                             gr.Textbox(label = 'Second Code snippet')], 
+                     outputs=[gr.Textbox(label = 'Summary of first Code snippet'), 
+                              gr.Textbox(label = 'Summary of second Code snippet'),
+                              gr.Textbox(label = 'The similarity score')],
+                     description='The similarity score')
 iface.launch()
